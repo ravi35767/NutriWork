@@ -1,0 +1,115 @@
+.rootBox {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Left Side */
+.leftSide {
+  /* width: 50%; */ /* Handled by responsive props */
+  position: relative;
+  /* display: block; */ /* Handled by responsive props */
+}
+
+.leftSideBackground {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+.leftSideContent {
+  position: relative;
+  z-index: 2;
+  padding: 32px; /* Corresponds to p: 4 */
+}
+
+.logoContainer {
+  display: flex;
+  align-items: center;
+}
+
+.logoWrapper {
+  /* width: 48px; */ /* Handled by responsive props */
+  /* height: 48px; */ /* Handled by responsive props */
+  border-radius: 4px; /* Corresponds to borderRadius: 1 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16px; /* Corresponds to mr: 2 */
+}
+
+.logoImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.brandName {
+  color: #fff;
+  font-weight: 600;
+  /* font-size: 1.25rem; */ /* Handled by responsive props */
+}
+
+.heading {
+  color: #fff;
+  font-weight: bold;
+  margin-top: 24px; /* Corresponds to mt: 3 */
+  /* font-size: 2.25rem; */ /* Handled by responsive props */
+  line-height: 1.2;
+  max-width: 90%;
+}
+
+/* Right Side */
+.rightSide {
+  /* width: 50%; */ /* Handled by responsive props */
+  display: flex;
+  /* justify-content: flex-start; */ /* Handled by props */
+  align-items: center;
+  /* padding: 32px; */ /* Handled by responsive props */
+  overflow: hidden;
+}
+
+.formContainer {
+  padding-top: 32px; /* Corresponds to py: 4 */
+  padding-bottom: 32px; /* Corresponds to py: 4 */
+  max-height: 90vh;
+  overflow-y: auto;
+  scrollbar-width: none; /* Hide scrollbar for Firefox */
+}
+
+/* Hide scrollbar for Webkit */
+.formContainer::-webkit-scrollbar {
+  width: 0px; 
+}
+.formContainer::-webkit-scrollbar-thumb {
+  background-color: transparent;
+}
+.formContainer::-webkit-scrollbar-track {
+  background-color: transparent;
+}
+
+
+.titleContainer {
+  margin-bottom: 16px; /* Corresponds to mb: 2 */
+}
+
+.title {
+  font-weight: 700;
+  margin-bottom: 8px; /* Corresponds to mb: 1 */
+  /* font-size: 2rem; */ /* Handled by responsive props */
+}
+
+.errorText {
+  margin-bottom: 8px; /* Corresponds to mb: 1 */
+  background-color: #ffebee;
+  padding: 8px;
+  border-radius: 4px;
+  text-align: center;
+  /* font-size: 1rem; */ /* Handled by responsive props */
+  color: #d32f2f; /* Default error color */
+}
+
+.childrenWrapper {
+  /* No specific styles needed, just wraps children */
+}

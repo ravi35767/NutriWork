@@ -1,0 +1,15 @@
+.submitButton {
+  padding-top: 10px; /* Corresponds to py: 1.25 */
+  padding-bottom: 10px; /* Corresponds to py: 1.25 */
+  background-color: #084043; /* Use theme color if available */
+  font-size: 1rem;
+  font-weight: 600;
+  /* Add hover styles */
+}
+
+.submitButton:hover {
+  background-color: #048d93; /* Use theme color if available */
+}
+
+/* Add disabled styles if needed */
+/* .submitButton:disabled { ... } */

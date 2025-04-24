@@ -1,0 +1,92 @@
+.layoutBox {
+  display: 'flex';
+}
+
+.sidebarDrawer {
+  width: 240px; /* Use a variable or fixed value */
+  flex-shrink: 0;
+}
+
+.sidebarPaper {
+  width: 240px; /* Match drawer width */
+  box-sizing: 'border-box'; 
+  background-color: #004D40; /* Use theme color */
+  color: white;
+}
+
+.sidebarToolbar {
+  display: 'flex';
+  align-items: 'center';
+  justify-content: 'center';
+  padding: 16px; /* Adjust as needed */
+}
+
+.sidebarDivider {
+  background-color: rgba(255, 255, 255, 0.12);
+}
+
+.userProfileBox {
+  display: 'flex';
+  flex-direction: 'column';
+  align-items: 'center';
+  padding: 16px;
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+
+.userAvatar {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 8px;
+}
+
+.navList {
+  flex-grow: 1;
+}
+
+.navListItemButton {
+  color: white; /* Ensure text color */
+}
+
+.navListItemIcon {
+   color: white;
+}
+
+/* Apply hover and selected styles using pseudo-classes or MUI's sx prop for state */
+/* It might be easier to keep state-based styles (hover, selected) in the sx prop */
+/* .navListItemButton:hover { background-color: rgba(255, 255, 255, 0.08); } */
+/* .navListItemButtonSelected { background-color: rgba(255, 255, 255, 0.1); } */
+
+
+.logoutListItemButton {
+  color: white;
+}
+/* .logoutListItemButton:hover { background-color: rgba(255, 255, 255, 0.08); } */
+
+
+.topbarAppBar {
+  width: calc(100% - 240px); /* Use drawer width variable/value */
+  margin-left: 240px; /* Use drawer width variable/value */
+  background-color: #ffffff; /* Use theme background.paper */
+  box-shadow: none; 
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12); /* Use theme divider color */
+}
+
+.topbarToolbar {
+  justify-content: flex-end;
+}
+
+.topbarIcon {
+   color: rgba(0, 0, 0, 0.87); /* Use theme text.primary */
+}
+
+.mainContentBox {
+  flex-grow: 1; 
+  background-color: #ffffff; /* Use theme background.default */
+  height: 100vh; 
+  overflow: 'auto';
+}
+
+.pageContentBox {
+  padding: 24px; /* Adjust as needed */
+}

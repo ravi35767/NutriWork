@@ -1,0 +1,24 @@
+.label {
+  margin-bottom: 8px; /* Corresponds to mb: 1 */
+  color: #333333;
+}
+
+.textField {
+  margin-bottom: 16px; /* Corresponds to mb: 2 */
+}
+
+.inputBase {
+  background-color: #F8FAFC;
+  border-radius: 6px; /* Corresponds to borderRadius: 1.5 */
+}
+
+/* Target the outlined input's border */
+/* Note: Targeting nested MUI classes like this can be brittle. */
+/* Consider using MUI's styled() utility or Theme overrides for more robust styling. */
+.inputBase fieldset { /* Targets the notchedOutline */
+  border-color: #E0E0E0 !important; /* Use !important cautiously if needed to override MUI defaults */
+}
+
+/* Add hover/focus styles if desired */
+/* .inputBase:hover fieldset { border-color: #C0C0C0 !important; } */
+/* .inputBase.Mui-focused fieldset { border-color: #1976d2 !important; } */ /* Use theme primary color */

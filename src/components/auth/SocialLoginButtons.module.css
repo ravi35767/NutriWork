@@ -1,0 +1,44 @@
+.rootBox {
+  text-align: center;
+  margin-bottom: 24px; /* Corresponds to mb: 3 */
+}
+
+.title {
+  margin-bottom: 16px; /* Corresponds to mb: 2 */
+  color: #333333;
+}
+
+.buttonContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Corresponds to gap: 2 */
+  margin-bottom: 16px; /* Corresponds to mb: 2 for Google button container */
+}
+
+.socialButton {
+  font-family: "Poppins", sans-serif; /* Ensure Poppins is loaded */
+  font-size: 12px;
+  line-height: 100%;
+  text-transform: none;
+  border: 1px solid #E0E0E0;
+  border-radius: 8px;
+  color: #333333;
+  background-color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding-top: 9.6px; /* Corresponds to py: 1.2 */
+  padding-bottom: 9.6px; /* Corresponds to py: 1.2 */
+}
+
+.socialButton:hover {
+  background-color: #f5f5f5;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+}
+
+.providerName {
+  font-weight: 700;
+  margin-left: 4px;
+}

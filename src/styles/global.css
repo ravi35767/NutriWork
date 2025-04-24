@@ -1,0 +1,15 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Override image placeholders in development */
+img[src^="/"] {
+  background-color: #e5e7eb;
+  min-height: 20px;
+  min-width: 20px;
+} 
