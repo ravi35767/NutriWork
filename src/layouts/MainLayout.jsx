@@ -23,6 +23,7 @@ import {
   AppBar,
   IconButton,
   Tooltip, // Added Tooltip
+  Button,
 } from "@mui/material";
 import { styled, useTheme } from "@mui/material/styles"; // Added for transitions/styling
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -39,7 +40,7 @@ import MenuIcon from "@mui/icons-material/Menu"; // Icon for toggle button
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft"; // Icon for toggle button
 // Removed CSS Module import as we'll use styled components or sx prop more heavily for dynamic styles
 // import styles from './MainLayout.module.css';
-import Nutrilogo from "../assets/Nutriwork-logo.png"
+import Nutrilogo from "../assets/Nutriwork-logo.png";
 const drawerWidth = 240;
 const collapsedDrawerWidth = 60; // Width when collapsed
 
@@ -142,11 +143,6 @@ const AppSidebar = ({ open }) => {
         icon: <ReportProblemIcon />,
         path: "/admin/moderation",
       },
-      {
-        text: "Review Management",
-        icon: <RateReviewIcon />,
-        path: "/admin/reviews",
-      }, // Added Admin Review Link
       { text: "Profile", icon: <AccountCircleIcon />, path: "/profile" },
     ];
   } else if (user?.role === "trainer" || user?.role === "nutritionist") {
@@ -326,33 +322,75 @@ const AppSidebar = ({ open }) => {
 
 // --- Topbar Component ---
 // Modified to accept open state and toggle handler
-const AppTopbar = ({ open, handleDrawerOpen }) => (
-  // Use StyledAppBar
-  <StyledAppBar position="fixed" open={open}>
-    <Toolbar sx={{ justifyContent: "space-between" }}>
-      {" "}
-      {/* Changed justify */}
-      <IconButton
-        color="inherit"
-        aria-label="open drawer"
-        onClick={handleDrawerOpen}
-        edge="start"
-        sx={{
-          marginRight: 5,
-          color: "text.primary", // Make icon visible on white bg
-          ...(open && { display: "none" }), // Hide when drawer is open
-        }}
-      >
-        <MenuIcon />
-      </IconButton>
-      {/* Empty Box to push notifications to the right */}
-      <Box sx={{ flexGrow: 1 }} />
-      <IconButton color="inherit">
-        <NotificationsIcon sx={{ color: "text.primary" }} />
-      </IconButton>
-    </Toolbar>
-  </StyledAppBar>
-);
+const AppTopbar = ({ open, handleDrawerOpen }) => {
+  const { user } = useSelector((state) => state.auth);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Check if current page is Dashboard and user is a trainer
+  const isTrainerDashboard =
+    location.pathname === "/dashboard" && user?.role === "trainer";
+
+  const handleCreateSession = () => {
+    navigate('/create-session');
+  };
+
+  return (
+    <StyledAppBar position="fixed" open={open}>
+      <Toolbar>
+        <IconButton
+          color="inherit"
+          aria-label="open drawer"
+          onClick={handleDrawerOpen}
+          edge="start"
+          sx={{
+            marginRight: 5,
+            ...(open && { display: "none" }),
+          }}
+        >
+          <MenuIcon />
+        </IconButton>
+        <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+          {location.pathname === "/dashboard"
+            ? "Dashboard"
+            : location.pathname === "/trainees"
+            ? "Trainees"
+            : location.pathname === "/profile"
+            ? "Profile"
+            : location.pathname === "/reviews"
+            ? "Reviews"
+            : location.pathname === "/videos"
+            ? "My Videos"
+            : "Dashboard"}
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          {isTrainerDashboard && (
+            <>
+              <Button
+                variant="contained"
+                onClick={handleCreateSession}
+                sx={{
+                  backgroundColor: "#004D40",
+                  "&:hover": {
+                    backgroundColor: "#00695C",
+                  },
+                  textTransform: "none",
+                  minWidth: "120px",
+                  height: "36px",
+                }}
+              >
+                + Create New Session
+              </Button>
+            </>
+          )}
+          <IconButton color="inherit">
+            <NotificationsIcon />
+          </IconButton>
+        </Box>
+      </Toolbar>
+    </StyledAppBar>
+  );
+};
 
 // --- Main Layout ---
 const MainLayout = () => {

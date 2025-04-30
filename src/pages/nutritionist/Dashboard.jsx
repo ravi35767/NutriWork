@@ -1,4 +1,5 @@
 import React from 'react';
+import ChatWidget from '../../components/ChatWidget';
 import {
   Box,
   Typography,
@@ -191,8 +192,9 @@ const NutritionistDashboard = () => {
           </Grid>
         </Grid>
       </Grid>
+      <ChatWidget />
     </Box>
   );
 };
 
-export default NutritionistDashboard; 
+export default NutritionistDashboard;

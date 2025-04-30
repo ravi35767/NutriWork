@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { Box, CircularProgress, Typography } from '@mui/material'; // Assuming Material UI
+import DashboardLayout from '../../layouts/DashboardLayout';
 
 // Import role-specific dashboards
 import TrainerDashboard from './TrainerDashboard';
@@ -36,7 +37,11 @@ const Dashboard = () => {
   // Render the appropriate dashboard based on user role
   switch (user.role) {
     case 'trainer':
-      return <TrainerDashboard />;
+      return (
+        
+          <TrainerDashboard />
+        
+      );
     case 'nutritionist':
       return <NutritionistDashboard />;
     case 'admin':

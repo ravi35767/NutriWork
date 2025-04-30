@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchPendingVerifications, updateVerificationStatus } from '../../redux/adminSlice';
+import { useNavigate } from 'react-router-dom';
 import { 
   Box, 
   Typography, 
@@ -25,12 +26,13 @@ import {
 
 const VerificationQueue = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { pendingVerifications, loading, error, actionLoading, actionError } = useSelector((state) => state.admin);
   const { profiles, currentPage, totalPages, totalPending } = pendingVerifications;
 
-  const [page, setPage] = useState(1);
-  const [confirmAction, setConfirmAction] = useState(null); // { type: 'approve'/'reject', user }
-  const [rejectionReason, setRejectionReason] = useState('');
+  const [page, setPage] = React.useState(1);
+  const [confirmAction, setConfirmAction] = React.useState(null); // { type: 'approve'/'reject', user }
+  const [rejectionReason, setRejectionReason] = React.useState('');
 
   useEffect(() => {
     dispatch(fetchPendingVerifications({ page }));
@@ -42,7 +44,7 @@ const VerificationQueue = () => {
 
   const handleOpenConfirm = (type, user) => {
     setConfirmAction({ type, user });
-    setRejectionReason(''); // Reset reason
+    setRejectionReason('');
   };
 
   const handleCloseConfirm = () => {
@@ -53,16 +55,24 @@ const VerificationQueue = () => {
     if (!confirmAction) return;
     
     const { type, user } = confirmAction;
-    const status = type === 'approve' ? 'verified' : 'rejected';
+    let status = '';
+    if (type === 'approve') {
+      status = 'verified';
+    } else if (type === 'reject') {
+      status = 'rejected';
+    }
     
     dispatch(updateVerificationStatus({ userId: user._id, status, reason: rejectionReason }))
       .unwrap()
       .then(() => {
-        handleCloseConfirm(); // Close dialog on success
+        handleCloseConfirm();
       })
       .catch(() => {
-        // Error is handled by actionError state, dialog remains open
       });
+  };
+
+  const handleRowClick = (profile) => {
+    navigate(`/admin/verification/${profile._id}`);
   };
 
   return (
@@ -88,16 +98,16 @@ const VerificationQueue = () => {
               <TableBody>
                 {profiles && profiles.length > 0 ? (
                   profiles.map((profile) => (
-                    <TableRow key={profile._id}>
-                      <TableCell>{`${profile.user?.firstName || ''} ${profile.user?.lastName || ''}`}</TableCell>
-                      <TableCell>{profile.user?.email || 'N/A'}</TableCell>
-                      <TableCell sx={{ textTransform: 'capitalize' }}>{profile.user?.role || 'N/A'}</TableCell>
+                    <TableRow 
+                      key={profile._id}
+                      onClick={() => handleRowClick(profile)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      <TableCell>{`${profile.firstName || ''} ${profile.lastName || ''}`}</TableCell>
+                      <TableCell>{profile.email || 'N/A'}</TableCell>
+                      <TableCell sx={{ textTransform: 'capitalize' }}>{profile.role || 'N/A'}</TableCell>
                       <TableCell>
-                        {profile.verificationDocuments?.map((doc, index) => (
-                          <a key={index} href={doc.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: 'block' }}>
-                            {doc.documentName || `Document ${index + 1}`}
-                          </a>
-                        )) || 'None'}
+                        None
                       </TableCell>
                       <TableCell>
                         <Button 
@@ -105,7 +115,7 @@ const VerificationQueue = () => {
                           color="success" 
                           size="small" 
                           sx={{ mr: 1 }}
-                          onClick={() => handleOpenConfirm('approve', profile.user)}
+                          onClick={() => handleOpenConfirm('approve', profile)}
                           disabled={actionLoading}
                         >
                           Approve
@@ -114,7 +124,7 @@ const VerificationQueue = () => {
                           variant="contained" 
                           color="error" 
                           size="small"
-                          onClick={() => handleOpenConfirm('reject', profile.user)}
+                          onClick={() => handleOpenConfirm('reject', profile)}
                           disabled={actionLoading}
                         >
                           Reject
@@ -149,7 +159,7 @@ const VerificationQueue = () => {
         <DialogTitle>Confirm Action</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Are you sure you want to {confirmAction?.type} the verification for {confirmAction?.user?.firstName} {confirmAction?.user?.lastName}?
+            Are you sure you want to {confirmAction?.type} the verification for {confirmAction?.user?.firstName || confirmAction?.profile?.firstName} {confirmAction?.user?.lastName || confirmAction?.profile?.lastName}?
           </DialogContentText>
           {confirmAction?.type === 'reject' && (
             <TextField
@@ -173,7 +183,6 @@ const VerificationQueue = () => {
           </Button>
         </DialogActions>
       </Dialog>
-
     </Box>
   );
 };

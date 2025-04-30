@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { 
   fetchReportedUsers, 
   fetchReportedPosts, 
-  fetchReportedComments, 
   fetchReportedCommunities,
   dismissReport, 
   updateUserAccountStatusAdmin,
   deleteReportedPost, // Import delete actions
-  deleteReportedComment,
-  deleteReportedCommunity 
+  deleteReportedCommunity,
+  deleteUserAdmin
 } from '../../redux/adminSlice';
 import { 
   Box, 
@@ -56,8 +55,20 @@ function TabPanel(props) {
 
 const ModerationPage = () => {
   const dispatch = useDispatch();
-  const { reports, loadingReports, errorReports, actionLoading } = useSelector((state) => state.admin); 
+  // Provide default values to prevent errors on initial render
+const {
+  reportedUsers,
+  reportedPosts,
+  reportedComments,
+  reportedCommunities,
+  loadingReports,
+  errorReports,
+  actionLoading
+} = useSelector((state) => state.admin || {});
   const [currentTab, setCurrentTab] = useState(0);
+
+  // Memoize the reportedCommunities array
+  const memoizedCommunities = useMemo(() => reportedCommunities, [reportedCommunities]);
 
   const handleTabChange = (event, newValue) => {
     setCurrentTab(newValue);
@@ -68,7 +79,6 @@ const ModerationPage = () => {
     switch (currentTab) {
       case 0: dispatch(fetchReportedUsers()); break;
       case 1: dispatch(fetchReportedPosts()); break;
-      case 2: dispatch(fetchReportedComments()); break;
       case 3: dispatch(fetchReportedCommunities()); break;
       default: break;
     }
@@ -78,10 +88,9 @@ const ModerationPage = () => {
   const getCurrentError = () => {
     if (!errorReports) return null;
     switch (currentTab) {
-      case 0: return errorReports.users;
-      case 1: return errorReports.posts;
-      case 2: return errorReports.comments;
-      case 3: return errorReports.communities;
+      case 0: return errorReports.reportedUsers;
+      case 1: return errorReports.reportedPosts;
+      case 3: return errorReports.reportedCommunities;
       default: return null;
     }
   };
@@ -116,7 +125,6 @@ const ModerationPage = () => {
      let reportType = '';
      if (currentTab === 0) reportType = 'users';
      else if (currentTab === 1) reportType = 'posts';
-     else if (currentTab === 2) reportType = 'comments';
      else if (currentTab === 3) reportType = 'communities';
 
      // Add confirmation for destructive actions
@@ -129,7 +137,7 @@ const ModerationPage = () => {
      switch (action) {
        case 'dismiss_user_report':
        case 'dismiss_post_report':
-       case 'dismiss_comment_report':
+       case 'dismiss_community_report':
        case 'dismiss_community_report':
          dispatch(dismissReport({ reportType, reportId: item._id }));
          break;
@@ -140,6 +148,14 @@ const ModerationPage = () => {
              updateUserAccountStatusAdmin({ userId: item.reportedUser._id, status: 'suspended' })
            );
          } else { console.error("Cannot suspend user: User ID missing from report item."); }
+         break;
+       case 'delete_user':
+         if (item.reportedUser?._id) {
+           confirmAction(
+             `Are you sure you want to delete user ${item.reportedUser.firstName}?`,
+             deleteUserAdmin(item.reportedUser._id)
+           );
+         } else { console.error("Cannot delete user: User ID missing from report item."); }
          break;
        case 'warn_user':
          console.log("[Placeholder] Warn user:", item.reportedUser?._id);
@@ -152,14 +168,6 @@ const ModerationPage = () => {
              deleteReportedPost(item.postId)
            );
          } else { console.error("Cannot delete post: Post ID missing from report item.", item); }
-         break;
-        case 'delete_comment':
-         if (item.commentId) { 
-            confirmAction(
-             `Are you sure you want to delete comment ${item.commentId}?`,
-             deleteReportedComment(item.commentId)
-           );
-         } else { console.error("Cannot delete comment: Comment ID missing from report item.", item); }
          break;
        case 'delete_community':
           if (item.communityId) { 
@@ -174,19 +182,18 @@ const ModerationPage = () => {
       }
   };
 
-  console.log("[ModerationPage] Rendering with state:", { reports, loadingReports, errorReports, currentTab }); 
+
 
   return (
     <Box>
       <Typography variant="h5" gutterBottom>Content Moderation</Typography>
-      
-      {getCurrentError() && <Alert severity="error" sx={{ mb: 2 }}>{getCurrentError()}</Alert>}
-      
+
+      {getCurrentError() && <Alert severity="error" sx={{ mb: 2 }}>Failed to fetch reported posts</Alert>}
+
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={currentTab} onChange={handleTabChange} aria-label="moderation tabs">
           <Tab label="Reported Users" id="moderation-tab-0" />
           <Tab label="Reported Posts" id="moderation-tab-1" />
-          <Tab label="Reported Comments" id="moderation-tab-2" />
           <Tab label="Reported Communities" id="moderation-tab-3" />
         </Tabs>
       </Box>
@@ -194,7 +201,7 @@ const ModerationPage = () => {
       {/* Reported Users Panel */}
       <TabPanel value={currentTab} index={0}>
         {renderTable(
-          reports.users,
+          reportedUsers,
           ['User', 'Reported By', 'Reason', 'Date'],
           (item) => (
             <TableRow key={item._id}>
@@ -218,10 +225,15 @@ const ModerationPage = () => {
                     <BlockIcon color="error" />
                   </IconButton>
                 </Tooltip>
+                <Tooltip title="Delete User">
+                  <IconButton onClick={() => handleModerationAction('delete_user', item)} disabled={actionLoading} size="small">
+                    <CancelIcon color="error" />
+                  </IconButton>
+                </Tooltip>
               </TableCell>
             </TableRow>
           ),
-          loadingReports.users,
+          loadingReports,
           errorReports?.users
         )}
       </TabPanel>
@@ -229,15 +241,15 @@ const ModerationPage = () => {
       {/* Reported Posts Panel */}
       <TabPanel value={currentTab} index={1}>
         {renderTable(
-          reports.posts,
+          reportedPosts,
           ['Post', 'Author', 'Reported By', 'Reason', 'Date'],
           (item) => (
-            <TableRow key={item._id}>
-              <TableCell>{item.post?.content?.substring(0, 50) || 'No content available'}...</TableCell>
-              <TableCell>{`${item.post?.author?.firstName || ''} ${item.post?.author?.lastName || ''}`}</TableCell>
-              <TableCell>{`${item.reportedBy?.firstName || ''} ${item.reportedBy?.lastName || ''}`}</TableCell>
+            <TableRow key={item._id + item.communityId}>
+              <TableCell>{typeof item.content === 'string' ? item.content?.substring(0, 50) : 'No content available'}...</TableCell>
+              <TableCell>{`${item.postCreator?.firstName || ''} ${item.postCreator?.lastName || ''}`}</TableCell>
+              <TableCell>{`${item.reporter?.firstName || ''} ${item.reporter?.lastName || ''}`}</TableCell>
               <TableCell>{item.reason || 'No reason provided'}</TableCell>
-              <TableCell>{new Date(item.reportedAt || item.createdAt).toLocaleDateString()}</TableCell>
+              <TableCell>{new Date(item.createdAt).toLocaleDateString()}</TableCell>
               <TableCell>
                 <Tooltip title="Dismiss Report">
                   <IconButton onClick={() => handleModerationAction('dismiss_post_report', item)} disabled={actionLoading} size="small">
@@ -252,68 +264,40 @@ const ModerationPage = () => {
               </TableCell>
             </TableRow>
           ),
-          loadingReports.posts,
+          loadingReports,
           errorReports?.posts
-        )}
-      </TabPanel>
-
-      {/* Reported Comments Panel */}
-      <TabPanel value={currentTab} index={2}>
-        {renderTable(
-          reports.comments,
-          ['Comment', 'Author', 'Reported By', 'Reason', 'Date'],
-          (item) => (
-            <TableRow key={item._id}>
-              <TableCell>{item.comment?.content?.substring(0, 50) || 'No content available'}...</TableCell>
-              <TableCell>{`${item.commenter?.firstName || ''} ${item.commenter?.lastName || ''}`}</TableCell>
-              <TableCell>{`${item.reportedBy?.firstName || ''} ${item.reportedBy?.lastName || ''}`}</TableCell>
-              <TableCell>{item.reason || 'No reason provided'}</TableCell>
-              <TableCell>{new Date(item.reportedAt || item.createdAt).toLocaleDateString()}</TableCell>
-              <TableCell>
-                <Tooltip title="Dismiss Report">
-                  <IconButton onClick={() => handleModerationAction('dismiss_comment_report', item)} disabled={actionLoading} size="small">
-                    <CheckCircleOutlineIcon color="success" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete Comment">
-                  <IconButton onClick={() => handleModerationAction('delete_comment', item)} disabled={actionLoading} size="small">
-                    <CancelIcon color="error" />
-                  </IconButton>
-                </Tooltip>
-              </TableCell>
-            </TableRow>
-          ),
-          loadingReports.comments,
-          errorReports?.comments
         )}
       </TabPanel>
 
       {/* Reported Communities Panel */}
       <TabPanel value={currentTab} index={3}>
         {renderTable(
-          reports.communities,
+          memoizedCommunities,
           ['Community', 'Reported By', 'Reason', 'Date'],
-          (item) => (
-            <TableRow key={item._id}>
-              <TableCell>{item.communityName || 'Unnamed Community'}</TableCell>
-              <TableCell>{`${item.reportedBy?.firstName || ''} ${item.reportedBy?.lastName || ''}`}</TableCell>
-              <TableCell>{item.reason || 'No reason provided'}</TableCell>
-              <TableCell>{new Date(item.reportedAt || item.createdAt).toLocaleDateString()}</TableCell>
-              <TableCell>
-                <Tooltip title="Dismiss Report">
-                  <IconButton onClick={() => handleModerationAction('dismiss_community_report', item)} disabled={actionLoading} size="small">
-                    <CheckCircleOutlineIcon color="success" />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Delete Community">
-                  <IconButton onClick={() => handleModerationAction('delete_community', item)} disabled={actionLoading} size="small">
-                    <CancelIcon color="error" />
-                  </IconButton>
-                </Tooltip>
-              </TableCell>
-            </TableRow>
-          ),
-          loadingReports.communities,
+          (item) => {
+            console.log("Reported Community Item:", item);
+            return (
+              <TableRow key={`${item._id}-${item.communityName}`}>
+                <TableCell>{item.communityName || 'Unnamed Community'}</TableCell>
+                <TableCell>{item.reportedBy ? `${item.reportedBy.firstName} ${item.reportedBy.lastName}` : 'N/A'}</TableCell>
+                <TableCell>{item.reason || 'No reason provided'}</TableCell>
+                <TableCell>{new Date(item.createdAt).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <Tooltip title="Dismiss Report">
+                    <IconButton onClick={() => handleModerationAction('dismiss_community_report', item)} disabled={actionLoading} size="small">
+                      <CheckCircleOutlineIcon color="success" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete Community">
+                    <IconButton onClick={() => handleModerationAction('delete_community', item)} disabled={actionLoading} size="small">
+                      <CancelIcon color="error" />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+              </TableRow>
+            );
+          },
+          loadingReports,
           errorReports?.communities
         )}
       </TabPanel>

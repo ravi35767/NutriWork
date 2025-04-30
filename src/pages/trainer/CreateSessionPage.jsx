@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { addSession } from '../../redux/trainerSlice';
 import {
   Box,
   Container,
@@ -14,12 +16,14 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Alert
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { dashboardService } from "../../services/api/dashboardService";
 
 // Styled components for custom styling
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -82,7 +86,7 @@ const StyledTextArea = styled(TextareaAutosize)(({ theme }) => ({
   },
 }));
 
-const ActionButton = styled(Button)(({ theme }) => ({
+const ActionButton = styled(Button)(() => ({
   padding: '10px 16px',
   borderRadius: 4,
   textTransform: 'none',
@@ -102,7 +106,7 @@ const CancelButton = styled(ActionButton)(({ theme }) => ({
   },
 }));
 
-const AddButton = styled(ActionButton)(({ theme }) => ({
+const AddButton = styled(ActionButton)(() => ({
   backgroundColor: '#084043',
   color: 'white',
   '&:hover': {
@@ -170,7 +174,7 @@ const SimpleTimeDialog = ({ open, onClose, onSelect }) => {
     if (period === 'PM' && hours < 12) hour24 += 12;
     if (period === 'AM' && hours === 12) hour24 = 0;
     
-    const timeStr = `${hours}:${minutes.toString().padStart(2, '0')} ${period}`;
+    const timeStr = `${hour24}:${minutes.toString().padStart(2, '0')} ${period}`;
     onSelect(timeStr);
     onClose();
   };
@@ -284,6 +288,7 @@ const CustomSelect = ({ label, value, onChange, options, placeholder }) => {
 };
 
 const CreateNewSession = () => {
+  const dispatch = useDispatch();
   const [traineeName, setTraineeName] = useState('');
   const [sessionDate, setSessionDate] = useState(null);
   const [sessionTime, setSessionTime] = useState('');
@@ -293,18 +298,36 @@ const CreateNewSession = () => {
   // Dialog states
   const [dateDialogOpen, setDateDialogOpen] = useState(false);
   const [timeDialogOpen, setTimeDialogOpen] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission
-    console.log({
+    setError(null);
+    setSuccess(false);
+
+    const sessionData = {
       traineeName,
       sessionDate,
       sessionTime,
       notes,
       frequency
-    });
-    alert('Form submitted successfully!');
+    };
+
+    try {
+      const response = await dashboardService.createSession(sessionData);
+      setSuccess(true);
+      // Dispatch the addSession action with the new session data
+      dispatch(addSession(response.data));
+      // Reset form fields
+      setTraineeName('');
+      setSessionDate(null);
+      setSessionTime('');
+      setNotes('');
+      setFrequency('Everyday');
+    } catch (err) {
+      setError(err.message || 'Failed to create session');
+    }
   };
   
   // Format date for display
@@ -328,6 +351,16 @@ const CreateNewSession = () => {
 
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }}>
+          Session created successfully!
+        </Alert>
+      )}
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
       <StyledPaper>
         <Box component="form" onSubmit={handleSubmit} sx={{ width: '100%' }}>
           {/* Trainee Dropdown */}

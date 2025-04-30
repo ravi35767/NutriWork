@@ -1,4 +1,6 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -34,11 +36,14 @@ const HeaderButton = styled(Button)({
 });
 
 const TrainerHeader = () => {
+  const user = useSelector((state) => state.auth.user);
+  const navigate = useNavigate();
+
   return (
     <HeaderContainer>
-      <Typography 
-        variant="h6" 
-        sx={{ 
+      <Typography
+        variant="h6"
+        sx={{
           fontSize: '20px',
           fontWeight: 500,
         }}
@@ -49,7 +54,12 @@ const TrainerHeader = () => {
         <HeaderButton variant="contained">
           Upload Video
         </HeaderButton>
-        <HeaderButton variant="contained">
+        {user?.role === 'trainer' && (
+          <HeaderButton variant="contained">
+            Create New User
+          </HeaderButton>
+        )}
+        <HeaderButton variant="contained" onClick={() => navigate('/trainer/create-session')}>
           Create session
         </HeaderButton>
         <IconButton sx={{ color: '#004D40' }}>
@@ -60,4 +70,4 @@ const TrainerHeader = () => {
   );
 };
 
-export default TrainerHeader; 
+export default TrainerHeader;

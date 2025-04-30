@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchTrainerProfile } from '../../redux/trainerSlice';
 import {
   Box,
   Typography,
@@ -37,6 +39,8 @@ const InfoItem = styled(Box)({
 });
 
 const Profile = () => {
+  const dispatch = useDispatch();
+  const profileData = useSelector((state) => state.trainer.profileData);
   const [isEditing, setIsEditing] = useState(false);
   const [profile, setProfile] = useState({
     name: 'Shaheen',
@@ -55,6 +59,10 @@ const Profile = () => {
       { position: 'Personal Trainer', company: 'City Gym', duration: '2018 - 2020' },
     ],
   });
+
+  useEffect(() => {
+    dispatch(fetchTrainerProfile());
+  }, [dispatch]);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -81,9 +89,9 @@ const Profile = () => {
                   src="/path-to-profile-image.jpg"
                   sx={{ width: 120, height: 120, mb: 2 }}
                 />
-                <Typography variant="h5">{profile.name}</Typography>
+                <Typography variant="h5">{profileData?.name}</Typography>
                 <Typography variant="subtitle1" color="text.secondary">
-                  {profile.title}
+                  {profileData?.title}
                 </Typography>
               </Box>
 
@@ -92,15 +100,15 @@ const Profile = () => {
               <Stack spacing={2}>
                 <InfoItem>
                   <LocationIcon color="action" />
-                  <Typography>{profile.location}</Typography>
+                  <Typography>{profileData?.location}</Typography>
                 </InfoItem>
                 <InfoItem>
                   <EmailIcon color="action" />
-                  <Typography>{profile.email}</Typography>
+                  <Typography>{profileData?.email}</Typography>
                 </InfoItem>
                 <InfoItem>
                   <PhoneIcon color="action" />
-                  <Typography>{profile.phone}</Typography>
+                  <Typography>{profileData?.phone}</Typography>
                 </InfoItem>
               </Stack>
 
@@ -109,7 +117,7 @@ const Profile = () => {
                   Specializations
                 </Typography>
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {profile.specializations.map((spec, index) => (
+                  {profileData?.specializations?.map((spec, index) => (
                     <Chip key={index} label={spec} color="primary" />
                   ))}
                 </Box>
@@ -136,7 +144,7 @@ const Profile = () => {
                     onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                   />
                 ) : (
-                  <Typography>{profile.bio}</Typography>
+                  <Typography>{profileData?.bio}</Typography>
                 )}
               </CardContent>
             </Card>
@@ -148,7 +156,7 @@ const Profile = () => {
                   <SchoolIcon sx={{ mr: 1 }} />
                   <Typography variant="h6">Education</Typography>
                 </Box>
-                {profile.education.map((edu, index) => (
+                {profileData?.education?.map((edu, index) => (
                   <Box key={index} sx={{ mb: 2 }}>
                     <Typography variant="subtitle1">{edu.degree}</Typography>
                     <Typography variant="body2" color="text.secondary">
@@ -166,7 +174,7 @@ const Profile = () => {
                   <WorkIcon sx={{ mr: 1 }} />
                   <Typography variant="h6">Experience</Typography>
                 </Box>
-                {profile.experience.map((exp, index) => (
+                {profileData?.experience?.map((exp, index) => (
                   <Box key={index} sx={{ mb: 2 }}>
                     <Typography variant="subtitle1">{exp.position}</Typography>
                     <Typography variant="body2" color="text.secondary">

@@ -24,6 +24,7 @@ function LoginPage() {
   } = useLoginForm();
 
   return (
+    
     <AuthLayout title="LOGIN" error={error}>
       <Box component="form" onSubmit={handleSubmit}>
         <FormField

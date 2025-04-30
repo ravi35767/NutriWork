@@ -8,10 +8,18 @@ export const fetchTrainerDashboard = createAsyncThunk(
   'trainer/fetchDashboard',
   async (_, { rejectWithValue }) => {
     try {
-      // Use the correct endpoint identified earlier
-      const response = await axiosInstance.get('/trainers/dashboard'); 
-      console.log('Trainer Dashboard Data Response:', response.data);
-      return response.data; // Expecting data like { totalTrainees, activeTrainees, upcomingSessions, etc. }
+      const [dashboardResponse, totalTraineesResponse, activeTraineesResponse] = await Promise.all([
+        axiosInstance.get('/trainers/dashboard'),
+        axiosInstance.get('/Trainers/trainees'),
+        axiosInstance.get('/Trainers/available')
+      ]);
+
+      const dashboardData = dashboardResponse.data;
+      dashboardData.totalTrainees = totalTraineesResponse.data.length;
+      dashboardData.activeTrainees = activeTraineesResponse.data.length;
+
+      console.log('Trainer Dashboard Data Response:', dashboardData);
+      return dashboardData; // Expecting data like { totalTrainees, activeTrainees, upcomingSessions, etc. }
     } catch (error) {
       console.error('Fetch Trainer Dashboard error:', error.response?.data || error);
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch dashboard data');
@@ -40,16 +48,50 @@ export const fetchTrainees = createAsyncThunk(
 // Async thunk to fetch trainer's profile data
 export const fetchTrainerProfile = createAsyncThunk(
   'trainer/fetchProfile',
-  async (_, { rejectWithValue }) => {
+  // Accept optional trainerId, get access to state
+  async (trainerId = null, { getState, rejectWithValue }) => { 
     try {
-      // Use the specific trainer profile endpoint
-      const response = await axiosInstance.get('/trainers/profile'); 
-      console.log('Fetch Trainer Profile Response:', response.data);
-      // Expecting profile data including populated user info
-      return response.data; 
+      const state = getState();
+      // Ensure auth state and user object exist before accessing role
+      const userRole = state.auth?.user?.role; 
+      let response;
+
+      // If admin is viewing a specific trainer profile
+      if (userRole === 'admin' && trainerId) {
+        console.log(`Admin fetching profile for trainer ID: ${trainerId}`);
+        // Use the admin endpoint to fetch user data by ID (using search)
+        // Note: This fetches User data, potentially not the full TrainerProfile
+        response = await axiosInstance.get('/admin/users', { 
+          // Use /api/admin/users endpoint
+          params: { search: trainerId, limit: 1 } // Search by ID/email, limit to 1 result
+        });
+        console.log('Admin Fetch User Response:', response.data);
+        // The response is an object { users: [], ... }. We need the first user.
+        if (response.data?.users?.length > 0) {
+           // Return the user object. Component might need adjustment for data structure.
+           // TODO: Consider fetching TrainerProfile separately if needed for admin view
+           return response.data.users[0]; 
+        } else {
+          console.error(`Trainer with ID ${trainerId} not found via admin search.`);
+          return rejectWithValue('Trainer not found');
+        }
+      } else if (userRole === 'trainer' && !trainerId) {
+        // Original behavior: Trainer fetching their own profile
+        console.log('Trainer fetching own profile');
+        response = await axiosInstance.get('/trainers/profile');
+        console.log('Fetch Trainer Profile Response:', response.data);
+        return response.data; // Expecting full profile data
+      } else {
+         // Handle other cases or unauthorized access if necessary
+         console.warn(`fetchTrainerProfile called with unexpected state: role=${userRole}, trainerId=${trainerId}`);
+         return rejectWithValue('Unauthorized or invalid parameters for fetching profile');
+      }
+      
     } catch (error) {
-      console.error('Fetch Trainer Profile error:', error.response?.data || error);
-      return rejectWithValue(error.response?.data?.message || 'Failed to fetch profile');
+      console.error('Fetch Trainer Profile error:', error.response?.data || error.message);
+      // Extract specific message if available from backend response
+      const message = error.response?.data?.msg || error.response?.data?.message || 'Failed to fetch profile data';
+      return rejectWithValue(message);
     }
   }
 );
@@ -115,24 +157,6 @@ export const uploadCertificate = createAsyncThunk(
   }
 );
 
-// Async Thunk for updating trainer profile
-export const updateTrainerProfile = createAsyncThunk(
-  'trainer/updateProfile',
-  async (profileData, { rejectWithValue, dispatch }) => {
-    try {
-      // Use the specific trainer profile update endpoint
-      const response = await axiosInstance.put('/trainers/profile', profileData); 
-      console.log('Update Trainer Profile Response:', response.data);
-      // Update profile data in state directly or refetch
-      dispatch(fetchTrainerProfile()); // Easiest is to refetch after update
-      return response.data; // Contains the updated profile
-    } catch (error) {
-      console.error('Update Trainer Profile error:', error.response?.data || error);
-      return rejectWithValue(error.response?.data?.message || 'Failed to update profile');
-    }
-  }
-);
-
 
 const initialState = {
   dashboardData: {
@@ -152,10 +176,10 @@ const initialState = {
   profileData: null, 
   loading: false, 
   uploadingCertificate: false, 
-  updatingProfile: false, // Specific state for profile update
+  // updatingProfile: false, // Removed
   error: null,
   certificateUploadError: null, 
-  profileUpdateError: null, // Specific error state
+  // profileUpdateError: null, // Removed
 };
 
 const trainerSlice = createSlice({
@@ -165,7 +189,9 @@ const trainerSlice = createSlice({
     clearTrainerError: (state) => {
       state.error = null;
     },
-    // Add other reducers as needed
+    addSession: (state, action) => {
+      state.dashboardData.upcomingSessions = [...state.dashboardData.upcomingSessions, action.payload];
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -255,23 +281,10 @@ const trainerSlice = createSlice({
       .addCase(uploadCertificate.rejected, (state, action) => {
         state.uploadingCertificate = false;
         state.certificateUploadError = action.payload || 'Failed to upload certificate';
-      })
-      // Update Trainer Profile reducers
-      .addCase(updateTrainerProfile.pending, (state) => {
-        state.updatingProfile = true;
-        state.profileUpdateError = null;
-      })
-      .addCase(updateTrainerProfile.fulfilled, (state, action) => {
-        state.updatingProfile = false;
-        // Profile data will be updated by the refetch in the thunk
-        // Optionally update state directly: state.profileData = action.payload;
-      })
-      .addCase(updateTrainerProfile.rejected, (state, action) => {
-        state.updatingProfile = false;
-        state.profileUpdateError = action.payload || 'Failed to update profile';
       });
+      // Removed Update Trainer Profile reducers
   },
 });
 
-export const { clearTrainerError } = trainerSlice.actions;
+export const { clearTrainerError, addSession } = trainerSlice.actions;
 export default trainerSlice.reducer;

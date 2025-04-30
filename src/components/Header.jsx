@@ -3,9 +3,11 @@ import { Box, IconButton, AppBar, Toolbar, Typography, Button } from '@mui/mater
 import MenuIcon from '@mui/icons-material/Menu';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 const Header = ({ isSidebarOpen, toggleSidebar }) => {
   const location = useLocation();
+  const { user } = useSelector((state) => state.auth);
 
   // Get the current page title
   const getPageTitle = () => {
@@ -20,8 +22,8 @@ const Header = ({ isSidebarOpen, toggleSidebar }) => {
     return titles[path] || 'Dashboard';
   };
 
-  // Check if current page is Dashboard to show/hide buttons
-  const isDashboardPage = location.pathname === '/dashboard';
+  // Check if current page is Dashboard and user is a trainer
+  const isTrainerDashboard = location.pathname === '/dashboard' && user?.role === 'trainer';
 
   return (
     <AppBar 
@@ -63,8 +65,14 @@ const Header = ({ isSidebarOpen, toggleSidebar }) => {
         </Box>
 
         {/* Right side buttons and notification */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          {isDashboardPage && (
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: 2,
+          minWidth: 'fit-content',
+          zIndex: 1
+        }}>
+          {isTrainerDashboard && (
             <>
               <Button
                 variant="contained"
@@ -74,6 +82,8 @@ const Header = ({ isSidebarOpen, toggleSidebar }) => {
                     backgroundColor: '#00695C',
                   },
                   textTransform: 'none',
+                  minWidth: '120px',
+                  height: '36px'
                 }}
               >
                 Upload Video
@@ -86,6 +96,8 @@ const Header = ({ isSidebarOpen, toggleSidebar }) => {
                     backgroundColor: '#00695C',
                   },
                   textTransform: 'none',
+                  minWidth: '120px',
+                  height: '36px'
                 }}
               >
                 Create session

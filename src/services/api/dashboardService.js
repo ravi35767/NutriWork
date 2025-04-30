@@ -6,6 +6,10 @@ export const dashboardService = {
   getRecentActivities: () => API.get('/dashboard/activities'),
   getUpcomingEvents: () => API.get('/dashboard/events'),
   getNotifications: () => API.get('/dashboard/notifications'),
-  markNotificationAsRead: (notificationId) => 
+  markNotificationAsRead: (notificationId) =>
     API.put(`/dashboard/notifications/${notificationId}/read`),
-}; 
+  getTotalTrainees: () => API.get('/Trainers/trainees'),
+  getActiveTrainees: () => API.get('/Trainers/available'),
+  createSession: (sessionData) => API.post('/sessions', sessionData),
+  getUpcomingSessions: () => API.get('/sessions/upcoming'),
+};

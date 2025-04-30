@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Grid,
@@ -16,10 +16,15 @@ import PeopleIcon from "@mui/icons-material/People";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import DashboardProfile from "../../components/Bio";
-import ChatList from './ChatList';
+import ChatList from "./ChatList";
+import TrainerHeader from "../../components/trainer/TrainerHeader";
+import { dashboardService } from "../../services/api/dashboardService";
 
 const Dashboard = () => {
   const theme = useTheme();
+  const [totalTrainees, setTotalTrainees] = useState(0);
+  const [activeTrainees, setActiveTrainees] = useState(0);
+  const [upcomingSessions, setUpcomingSessions] = useState([]);
   const isXsScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const isSmScreen = useMediaQuery(theme.breakpoints.between("sm", "md"));
 
@@ -28,14 +33,42 @@ const Dashboard = () => {
   const currentMonth = new Date().toLocaleString("default", { month: "long" });
   const currentYear = new Date().getFullYear();
 
-  // For responsive calendar
   const [visibleDates, setVisibleDates] = useState(
     isXsScreen ? 7 : isSmScreen ? 14 : 31
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     setVisibleDates(isXsScreen ? 7 : isSmScreen ? 14 : 31);
   }, [isXsScreen, isSmScreen]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const totalTraineesData = await dashboardService.getTotalTrainees();
+        setTotalTrainees(totalTraineesData.data.length);
+
+        const activeTraineesData = await dashboardService.getActiveTrainees();
+        setActiveTrainees(activeTraineesData.data.length);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    const fetchSessions = async () => {
+      try {
+        const sessionsData = await dashboardService.getUpcomingSessions();
+        setUpcomingSessions(sessionsData.data);
+      } catch (error) {
+        console.error("Error fetching sessions:", error);
+      }
+    };
+
+    fetchSessions();
+  }, []);
 
   return (
     <Box
@@ -46,14 +79,9 @@ const Dashboard = () => {
         overflow: "hidden",
       }}
     >
+      <TrainerHeader />
       <Container maxWidth="xl" sx={{ px: { xs: 1, sm: 2, md: 3 } }}>
-        <Grid
-          container
-          spacing={{ xs: 1, sm: 2, md: 3, lg: 4 }}
-          alignItems="stretch"
-        >
-          
-          
+        <Grid container spacing={{ xs: 1, sm: 2, md: 3, lg: 4 }} alignItems="stretch">
           {/* First Column - Profile */}
           <Grid item xs={12} md={6} lg={4}>
             <Box sx={{ height: "100%" }}>
@@ -61,14 +89,14 @@ const Dashboard = () => {
             </Box>
           </Grid>
 
-          {/* Second Column - Total Trainee, Upcoming Session, Calendar */}
+          {/* Second Column */}
           <Grid item xs={12} md={6} lg={4}>
-            <Grid container spacing={{ xs: 1, sm: 2, md: 3 }} height="100%">
+            <Grid container spacing={2}>
               {/* Total Trainee */}
-              <Grid item xs={12} sm={6} md={12} mb={4}>
+              <Grid item xs={12} sm={6} md={12}>
                 <Paper
                   sx={{
-                    p: { xs: 1.5, sm: 2, md: 2.5 },
+                    p: 2,
                     borderRadius: 2,
                     height: "100%",
                     display: "flex",
@@ -84,289 +112,118 @@ const Dashboard = () => {
                     }}
                   >
                     <Box>
-                      <Typography
-                        variant={isXsScreen ? "body1" : "subtitle1"}
-                        sx={{ mb: 0.5 }}
-                      >
+                      <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
                         Total Trainee
                       </Typography>
-                      <Typography
-                        variant={isXsScreen ? "h6" : "h5"}
-                        sx={{ fontWeight: 600, mb: 0.5 }}
-                      >
-                        120
+                      <Typography variant="h5" sx={{ fontWeight: 600, mb: 0.5 }}>
+                        {totalTrainees}
                       </Typography>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 0.5,
-                          color: "#2E7D32",
-                        }}
-                      >
-                        <ArrowForwardIcon
-                          sx={{
-                            fontSize: { xs: 12, sm: 14, md: 16 },
-                            transform: "rotate(-45deg)",
-                          }}
-                        />
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontSize: {
-                              xs: "0.7rem",
-                              sm: "0.75rem",
-                              md: "0.875rem",
-                            },
-                          }}
-                        >
-                          8.5% Up from yesterday
-                        </Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, color: "#2E7D32" }}>
+                        <ArrowForwardIcon sx={{ transform: "rotate(-45deg)" }} />
+                        <Typography variant="body2">8.5% Up from yesterday</Typography>
                       </Box>
                     </Box>
-                    <Avatar
-                      sx={{
-                        bgcolor: "#E8F5E9",
-                        width: { xs: 36, sm: 40, md: 48 },
-                        height: { xs: 36, sm: 40, md: 48 },
-                      }}
-                    >
-                      <PeopleIcon
-                        sx={{
-                          color: "#2E7D32",
-                          fontSize: { xs: 18, sm: 20, md: 24 },
-                        }}
-                      />
+                    <Avatar sx={{ bgcolor: "#E8F5E9" }}>
+                      <PeopleIcon sx={{ color: "#2E7D32" }} />
                     </Avatar>
                   </Box>
                 </Paper>
               </Grid>
 
               {/* Upcoming Session */}
-              <Grid item xs={12} sm={6} md={12} mb={4}>
+              <Grid item xs={12} sm={6} md={12}>
                 <Paper
                   sx={{
-                    p: { xs: 1.5, sm: 2, md: 2.5 },
+                    p: 2,
                     borderRadius: 2,
                     bgcolor: "#004D40",
                     color: "white",
                     height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                    justifyContent: "center",
                   }}
                 >
-                  <Typography
-                    variant={isXsScreen ? "body1" : "subtitle1"}
-                    sx={{ mb: 1 }}
-                  >
+                  <Typography variant="subtitle1" sx={{ mb: 1 }}>
                     Upcoming Session
                   </Typography>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: { xs: 1, sm: 1.5, md: 2 },
-                    }}
-                  >
-                    <Paper
-                      sx={{
-                        p: { xs: 0.75, sm: 1, md: 1.25 },
-                        borderRadius: 1,
-                        bgcolor: "rgba(255,255,255,0.1)",
-                        color: "white",
-                        minWidth: { xs: "40px", sm: "45px", md: "50px" },
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Typography
-                        variant={isXsScreen ? "subtitle1" : "h6"}
-                        align="center"
-                        sx={{ lineHeight: 1.2 }}
-                      >
-                        14
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        align="center"
-                        display="block"
-                        sx={{
-                          fontSize: {
-                            xs: "0.6rem",
-                            sm: "0.625rem",
-                            md: "0.75rem",
-                          },
-                        }}
-                      >
-                        Jan
-                      </Typography>
-                    </Paper>
-                    <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                      <Typography
-                        variant={isXsScreen ? "body1" : "subtitle1"}
-                        sx={{
-                          fontSize: {
-                            xs: "0.85rem",
-                            sm: "0.875rem",
-                            md: "1rem",
-                          },
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        Workout with John
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          opacity: 0.7,
-                          fontSize: {
-                            xs: "0.7rem",
-                            sm: "0.75rem",
-                            md: "0.875rem",
-                          },
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                        }}
-                      >
-                        30 minutes session
-                      </Typography>
-                    </Box>
-                  </Box>
+                  {upcomingSessions.length > 0 ? (
+                    upcomingSessions.map((session) => (
+                      <Box key={session.id} sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1 }}>
+                        <Paper
+                          sx={{
+                            p: 1,
+                            borderRadius: 1,
+                            bgcolor: "rgba(255,255,255,0.1)",
+                            color: "white",
+                            minWidth: "50px",
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                          }}
+                        >
+                          <Typography variant="h6">
+                            {new Date(session.sessionDate).getDate()}
+                          </Typography>
+                          <Typography variant="caption">
+                            {new Date(session.sessionDate).toLocaleString("default", { month: "short" })}
+                          </Typography>
+                        </Paper>
+                        <Box>
+                          <Typography>Workout with {session.traineeName}</Typography>
+                          <Typography variant="body2" sx={{ opacity: 0.7 }}>
+                            {session.sessionTime} session
+                          </Typography>
+                        </Box>
+                      </Box>
+                    ))
+                  ) : (
+                    <Typography variant="body2">No upcoming sessions.</Typography>
+                  )}
                 </Paper>
               </Grid>
 
               {/* Calendar */}
               <Grid item xs={12}>
-                <Paper sx={{ p: { xs: 1.5, sm: 2, md: 2.5 }, borderRadius: 2 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      mb: { xs: 1, sm: 1.5, md: 2 },
-                    }}
-                  >
-                    <Typography
-                      variant={isXsScreen ? "body1" : "subtitle1"}
-                      sx={{
-                        fontSize: { xs: "0.85rem", sm: "0.875rem", md: "1rem" },
-                      }}
-                    >
-                      Session schedule
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: { xs: 0.5, sm: 1, md: 1.5 },
-                      }}
-                    >
-                      <IconButton size={isXsScreen ? "small" : "medium"}>
-                        <ArrowBackIosIcon
-                          sx={{ fontSize: { xs: 10, sm: 12, md: 14 } }}
-                        />
-                      </IconButton>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontSize: {
-                            xs: "0.7rem",
-                            sm: "0.75rem",
-                            md: "0.875rem",
-                          },
-                          whiteSpace: "nowrap",
-                        }}
-                      >
+                <Paper sx={{ p: 2, borderRadius: 2 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+                    <Typography variant="subtitle1">Session schedule</Typography>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <IconButton size="small"><ArrowBackIosIcon /></IconButton>
+                      <Typography variant="body2">
                         {currentMonth} {currentYear}
                       </Typography>
-                      <IconButton size={isXsScreen ? "small" : "medium"}>
-                        <ArrowForwardIosIcon
-                          sx={{ fontSize: { xs: 10, sm: 12, md: 14 } }}
-                        />
-                      </IconButton>
+                      <IconButton size="small"><ArrowForwardIosIcon /></IconButton>
                     </Box>
                   </Box>
 
                   <Grid container spacing={0.5}>
-                    {days.slice(0, isXsScreen ? 7 : 7).map((day) => (
+                    {days.map((day) => (
                       <Grid item xs={12 / 7} key={day}>
-                        <Typography
-                          align="center"
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{
-                            fontSize: {
-                              xs: "0.6rem",
-                              sm: "0.625rem",
-                              md: "0.75rem",
-                            },
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
+                        <Typography align="center" variant="body2" color="text.secondary">
                           {day}
                         </Typography>
                       </Grid>
                     ))}
-
-                    {Array.from({ length: visibleDates }, (_, i) => i + 1).map(
-                      (date) => (
-                        <Grid item xs={12 / 7} key={date}>
-                          <Paper
-                            elevation={0}
-                            sx={{
-                              py: { xs: 0.25, sm: 0.5, md: 0.75 },
-                              textAlign: "center",
-                              bgcolor:
-                                date === currentDate
-                                  ? "#004D40"
-                                  : "transparent",
-                              color: date === currentDate ? "white" : "inherit",
-                              borderRadius: 1,
-                              minWidth: 0,
-                              margin: "1px",
-                            }}
-                          >
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontSize: {
-                                  xs: "0.6rem",
-                                  sm: "0.625rem",
-                                  md: "0.75rem",
-                                },
-                                lineHeight: 1.2,
-                              }}
-                            >
-                              {date}
-                            </Typography>
-                          </Paper>
-                        </Grid>
-                      )
-                    )}
+                    {Array.from({ length: visibleDates }, (_, i) => i + 1).map((date) => (
+                      <Grid item xs={12 / 7} key={date}>
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            textAlign: "center",
+                            bgcolor: date === currentDate ? "#004D40" : "transparent",
+                            color: date === currentDate ? "white" : "inherit",
+                            borderRadius: 1,
+                          }}
+                        >
+                          <Typography variant="body2">{date}</Typography>
+                        </Paper>
+                      </Grid>
+                    ))}
                   </Grid>
 
                   {!isXsScreen && !isSmScreen && visibleDates < 31 && (
-                    <Box
-                      sx={{ display: "flex", justifyContent: "center", mt: 1 }}
-                    >
+                    <Box sx={{ display: "flex", justifyContent: "center", mt: 1 }}>
                       <Typography
                         variant="body2"
-                        sx={{
-                          color: "#004D40",
-                          cursor: "pointer",
-                          fontSize: {
-                            xs: "0.7rem",
-                            sm: "0.75rem",
-                            md: "0.875rem",
-                          },
-                        }}
+                        sx={{ color: "#004D40", cursor: "pointer" }}
                         onClick={() => setVisibleDates(31)}
                       >
                         Show all dates
@@ -378,14 +235,14 @@ const Dashboard = () => {
             </Grid>
           </Grid>
 
-          {/* Third Column - Active Trainee, Chats, Recent Review */}
+          {/* Third Column */}
           <Grid item xs={12} lg={4}>
-            <Grid container spacing={{ xs: 1, sm: 2, md: 3 }}>
+            <Grid container spacing={2}>
               {/* Active Trainee */}
-              <Grid item xs={12} sm={6} md={6} lg={12} mb={4}>
+              <Grid item xs={12}>
                 <Paper
                   sx={{
-                    p: { xs: 1.5, sm: 2, md: 2.5 },
+                    p: 2,
                     borderRadius: 2,
                     height: "100%",
                     display: "flex",
@@ -393,69 +250,35 @@ const Dashboard = () => {
                     justifyContent: "center",
                   }}
                 >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <Box>
-                      <Typography
-                        variant={isXsScreen ? "body1" : "subtitle1"}
-                        sx={{ mb: 0.5 }}
-                      >
+                      <Typography variant="subtitle1" sx={{ mb: 0.5 }}>
                         Active Trainee
                       </Typography>
-                      <Typography
-                        variant={isXsScreen ? "h6" : "h5"}
-                        sx={{ fontWeight: 600 }}
-                      >
-                        10
+                      <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                        {activeTrainees}
                       </Typography>
                     </Box>
-                    <Avatar
-                      sx={{
-                        bgcolor: "#E8F5E9",
-                        width: { xs: 36, sm: 40, md: 48 },
-                        height: { xs: 36, sm: 40, md: 48 },
-                      }}
-                    >
-                      <PeopleIcon
-                        sx={{
-                          color: "#2E7D32",
-                          fontSize: { xs: 18, sm: 20, md: 24 },
-                        }}
-                      />
+                    <Avatar sx={{ bgcolor: "#E8F5E9" }}>
+                      <PeopleIcon sx={{ color: "#2E7D32" }} />
                     </Avatar>
                   </Box>
                 </Paper>
               </Grid>
 
-              {/* Chats */}
-              <Grid item xs={12} sm={6} md={6} lg={12} mb={4}>
+              {/* Chat List */}
+              <Grid item xs={12}>
                 <Paper
                   sx={{
-                    p: { xs: 1.5, sm: 2, md: 2.5 },
+                    p: 2,
                     borderRadius: 2,
                     height: "100%",
                     display: "flex",
                     flexDirection: "column",
-                    overflow: "hidden"
+                    overflow: "hidden",
                   }}
                 >
-                  <ChatList 
-                    maxItems={3} 
-                    sx={{ 
-                      '& .MuiPaper-root': {
-                        boxShadow: 'none',
-                        height: '100%'
-                      },
-                      '& .MuiBox-root': {
-                        height: '100%'
-                      }
-                    }}
-                  />
+                  <ChatList maxItems={3} />
                 </Paper>
               </Grid>
 
@@ -463,7 +286,7 @@ const Dashboard = () => {
               <Grid item xs={12}>
                 <Paper
                   sx={{
-                    p: { xs: 1.5, sm: 2, md: 2.5 },
+                    p: 2,
                     borderRadius: 2,
                     height: "100%",
                     display: "flex",
@@ -475,116 +298,28 @@ const Dashboard = () => {
                       display: "flex",
                       justifyContent: "space-between",
                       alignItems: "center",
-                      mb: { xs: 1, sm: 1.5, md: 2 },
+                      mb: 2,
                     }}
                   >
-                    <Typography
-                      variant={isXsScreen ? "body1" : "subtitle1"}
-                      sx={{
-                        fontSize: { xs: "0.85rem", sm: "0.875rem", md: "1rem" },
-                      }}
-                    >
-                      Recent Review
-                    </Typography>
+                    <Typography variant="subtitle1">Recent Review</Typography>
                     <Typography
                       variant="body2"
                       sx={{
                         color: "#004D40",
                         cursor: "pointer",
                         "&:hover": { textDecoration: "underline" },
-                        fontSize: {
-                          xs: "0.7rem",
-                          sm: "0.75rem",
-                          md: "0.875rem",
-                        },
                       }}
                     >
-                      View All
+                      See All
                     </Typography>
                   </Box>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      gap: { xs: 1, sm: 1.5, md: 2 },
-                      flexGrow: 1,
-                    }}
-                  >
-                    <Avatar
-                      src="/path-to-avatar"
-                      sx={{
-                        width: { xs: 28, sm: 32, md: 40 },
-                        height: { xs: 28, sm: 32, md: 40 },
-                      }}
-                    />
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: { xs: 0.5, sm: 1, md: 1.5 },
-                          mb: 0.5,
-                        }}
-                      >
-                        <Typography
-                          variant="subtitle2"
-                          sx={{
-                            fontSize: {
-                              xs: "0.7rem",
-                              sm: "0.75rem",
-                              md: "0.875rem",
-                            },
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          Hiam Nataroko
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          color="text.secondary"
-                          sx={{
-                            fontSize: {
-                              xs: "0.6rem",
-                              sm: "0.625rem",
-                              md: "0.7rem",
-                            },
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          10-08-2024
-                        </Typography>
-                      </Box>
-                      <Rating
-                        value={4.5}
-                        readOnly
-                        size={isXsScreen ? "small" : "medium"}
-                        precision={0.5}
-                        sx={{ mb: 0.5 }}
-                      />
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          display: "-webkit-box",
-                          WebkitLineClamp: isXsScreen ? 2 : 3,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                          fontSize: {
-                            xs: "0.65rem",
-                            sm: "0.7rem",
-                            md: "0.75rem",
-                          },
-                          lineHeight: 1.3,
-                        }}
-                      >
-                        Lorem Ipsum is simply dummy text of the printing and
-                        typesetting industry. Lorem Ipsum has been the
-                        industry's standard dummy text ever since the 1500s,
-                        when an unknown printer took a galley of type.
-                      </Typography>
-                    </Box>
-                  </Box>
+                  <Rating name="read-only" value={4} readOnly />
+                  <Typography variant="body2" sx={{ mt: 1 }}>
+                    "Great trainer! Helped me achieve my fitness goals."
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    - John Doe, 2 days ago
+                  </Typography>
                 </Paper>
               </Grid>
             </Grid>

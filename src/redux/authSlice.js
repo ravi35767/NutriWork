@@ -110,6 +110,24 @@ export const confirmPasswordReset = createAsyncThunk(
   }
 );
 
+// Async Thunk for updating user profile (generalized)
+export const updateUserProfile = createAsyncThunk(
+  'auth/updateProfile',
+  async (profileData, { rejectWithValue, dispatch, getState }) => {
+    try {
+      // Use the general profile update endpoint
+      const response = await axiosInstance.put('/profile/update', profileData); 
+      console.log('Update User Profile Response:', response.data);
+      // Return the updated user data to update the state
+      return response.data; 
+    } catch (error) {
+      console.error('Update User Profile error:', error.response?.data || error);
+      return rejectWithValue(error.response?.data?.message || 'Failed to update profile');
+    }
+  }
+);
+
+
 // Async thunk to load user data from token
 export const loadUser = createAsyncThunk(
   'auth/loadUser',
@@ -155,6 +173,9 @@ const getInitialState = () => {
     error: null,
     isAuthenticated: !!token,
     success: false,
+    // Add state for profile update
+    updatingProfile: false, 
+    profileUpdateError: null,
   };
 };
 
@@ -270,6 +291,27 @@ const authSlice = createSlice({
       .addCase(confirmPasswordReset.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload || 'Password reset confirmation failed';
+      })
+      // Update User Profile reducers
+      .addCase(updateUserProfile.pending, (state) => {
+        state.updatingProfile = true;
+        state.profileUpdateError = null;
+      })
+      .addCase(updateUserProfile.fulfilled, (state, action) => {
+        state.updatingProfile = false;
+        // Update user state with the returned updated user data
+        // Assuming the response contains the updated user object directly or nested
+        const updatedUser = action.payload.user || action.payload; 
+        if (updatedUser) {
+          // Merge updated fields into the existing user state
+          state.user = { ...state.user, ...updatedUser }; 
+        }
+        state.success = true; // Indicate success
+      })
+      .addCase(updateUserProfile.rejected, (state, action) => {
+        state.updatingProfile = false;
+        state.profileUpdateError = action.payload || 'Failed to update profile';
+        state.error = action.payload || 'Failed to update profile'; // Also set general error?
       });
   },
 });

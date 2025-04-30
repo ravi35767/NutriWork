@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { clearError } from '../redux/authSlice';
 import ProtectedRoute from '../components/ProtectedRoute';
-import Dashboard from '../pages/dashboard/Dashboard';
 import Login from '../pages/LoginPage'; // Corrected import to use the actual Login page
 import Signup from '../pages/SignupPage'; // Corrected import to use the actual Signup page
 import ForgotPassword from '../pages/ForgetPassword'; // Corrected path and typo
@@ -19,10 +18,18 @@ import VerificationQueue from '../pages/admin/VerificationQueue';
 import UserManagement from '../pages/admin/UserManagement';
 import ModerationPage from '../pages/admin/ModerationPage';
 import ReviewManagement from '../pages/admin/ReviewManagement'; // Import new admin page
+import CreateSessionPage from '../pages/trainer/CreateSessionPage'; // Add this import
+import React from 'react';
+import AdminDashboard from '../pages/admin/AdminDashboard';
+import UserDetailsPage from '../pages/admin/UserDetailsPage';
+import TrainerDashboard from '../pages/dashboard/TrainerDashboard';
+import { useSelector } from 'react-redux';
+const VerificationProfilePage = React.lazy(() => import('../pages/admin/VerificationProfilePage'));
 
 const AppRoutes = () => {
-  const location = useLocation();
-  const dispatch = useDispatch();
+    const location = useLocation();
+    const dispatch = useDispatch();
+    const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     dispatch(clearError());
@@ -48,11 +55,25 @@ const AppRoutes = () => {
           <MainLayout />
         }
       >
-        <Route
+       <Route
           path="/dashboard"
           element={
-            <ProtectedRoute allowedRoles={['trainer', 'nutritionist', 'admin', 'support']}>
-              <Dashboard />
+            <ProtectedRoute allowedRoles={['admin', 'trainer']}>
+              {user && user.role === 'admin' ? (
+                <AdminDashboard />
+              ) : user && user.role === 'trainer' ? (
+                <TrainerDashboard />
+              ) : (
+                <Navigate to="/" replace />
+              )}
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/create-session"
+          element={
+            <ProtectedRoute allowedRoles={['trainer']}>
+              <CreateSessionPage />
             </ProtectedRoute>
           }
         />
@@ -106,6 +127,24 @@ const AppRoutes = () => {
             }
          />
          <Route
+            path="/admin/verification/:userId"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <React.Suspense fallback={<>Loading...</>}>
+                  <VerificationProfilePage />
+                </React.Suspense>
+              </ProtectedRoute>
+            }
+         />
+         <Route
+            path="/admin/users/:userId"
+            element={
+              <ProtectedRoute allowedRoles={['admin']}>
+                <UserDetailsPage />
+              </ProtectedRoute>
+            }
+         />
+         <Route
             path="/admin/users"
             element={
               <ProtectedRoute allowedRoles={['admin']}>
@@ -113,7 +152,7 @@ const AppRoutes = () => {
               </ProtectedRoute>
             }
          />
-          <Route
+         <Route
             path="/admin/moderation"
             element={
               <ProtectedRoute allowedRoles={['admin']}>

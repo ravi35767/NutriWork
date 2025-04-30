@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -12,53 +12,32 @@ import {
   Divider,
   IconButton,
 } from '@mui/material';
+import API from '../../services/api';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 
-const ChatList = ({ maxItems = 5, sx = {} }) => {
+const ChatList = ({ maxItems = 5, sx = {}, onChatClick }) => {
   const navigate = useNavigate();
+  const [chats, setChats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Mock data - replace with actual data from your API/Redux store
-  const chats = [
-    {
-      id: 1,
-      name: 'Shaheen',
-      lastMessage: "I wanted to book a training session with you, Do you have free slots?",
-      timestamp: '8:38 AM',
-      avatar: 'https://mui.com/static/images/avatar/1.jpg',
-    },
-    {
-      id: 2,
-      name: 'Qasim',
-      lastMessage: 'I was really amazed by the way you train, Thank you',
-      timestamp: '9:38 AM',
-      avatar: 'https://mui.com/static/images/avatar/2.jpg',
-    },
-    {
-      id: 3,
-      name: 'Shaheen',
-      lastMessage: "I wanted to book a training session with you, Do you have free slots?",
-      timestamp: '8:38 AM',
-      avatar: 'https://mui.com/static/images/avatar/3.jpg',
-    },
-    {
-      id: 4,
-      name: 'Amna',
-      lastMessage: "When is our next session scheduled?",
-      timestamp: '10:15 AM',
-      avatar: 'https://mui.com/static/images/avatar/4.jpg',
-    },
-    {
-      id: 5,
-      name: 'Hira',
-      lastMessage: "Thank you for today's session!",
-      timestamp: '11:30 AM',
-      avatar: 'https://mui.com/static/images/avatar/5.jpg',
-    }
-  ];
+  useEffect(() => {
+    const fetchChats = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await API.get('/chat/conversations');
+        setChats(response.data.conversations);
+      } catch (error) {
+        console.error('Error fetching chats:', error);
+        setError(error.message || 'Failed to fetch chats');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleChatClick = (traineeId) => {
-    navigate(`/trainer/chat/${traineeId}`);
-  };
+    fetchChats();
+  }, []);
 
   const handleViewAllClick = () => {
     navigate('/trainer/chats');
@@ -133,7 +112,7 @@ const ChatList = ({ maxItems = 5, sx = {} }) => {
                 },
                 py: 1
               }}
-              onClick={() => handleChatClick(chat.id)}
+              onClick={() => onChatClick(chat.id)}
             >
               <ListItemAvatar>
                 <Avatar 
@@ -198,8 +177,15 @@ const ChatList = ({ maxItems = 5, sx = {} }) => {
           </React.Fragment>
         ))}
       </List>
+      {loading && <Typography>Loading chats...</Typography>}
+      {error && <Typography color="error">Error: {error}</Typography>}
+      {!loading && chats.length === 0 && (
+        <Typography sx={{ p: 2, textAlign: "center", color: "text.secondary" }}>
+          No recent chats.
+        </Typography>
+      )}
     </Box>
   );
 };
 
-export default ChatList; 
+export default ChatList;
